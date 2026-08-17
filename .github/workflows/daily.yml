@@ -1,0 +1,82 @@
+name: Panopticon Daily Cycle
+
+on:
+  schedule:
+    - cron: '0 1 * * *'  # 01:00 UTC = 09:00 Taiwan
+  workflow_dispatch:
+
+jobs:
+  ecosystem-monitor:
+    name: Ecosystem Health Check
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run ecosystem health check
+      run: |
+        python -m outer.monitor.checker --all --save
+        python -m outer.alerts.alerter --check
+
+    - name: Upload health data
+      uses: actions/upload-artifact@v4
+      with:
+        name: ecosystem-health
+        path: data/monitor/
+        retention-days: 90
+
+  inner-reflection:
+    name: Daily Reflection Prompt
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Show today's prompt
+      run: python -m inner.journal.cli --today
+
+  correlation-analysis:
+    name: Cross-Axis Correlation
+    runs-on: ubuntu-latest
+    needs: ecosystem-monitor
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run pattern analysis
+      run: python -m inner.patterns.analyzer --days 30
+      continue-on-error: true
+
+    - name: Run AI insights
+      run: python -m inner.insights.generator --analyze
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      continue-on-error: true
+
+    - name: Run correlation
+      run: python -m core.feedback.correlator --days 30
+      continue-on-error: true
