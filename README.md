@@ -157,7 +157,6 @@ Panopticon G-Code is a peer module in the G-Code ecosystem — it both
 ## 🌐 Global Constraints
 
 Inherited from the G-Code ecosystem:
-
 - **Bilingual Imperative**: All output in English + Traditional Chinese (繁體中文)
 - **CLI-First**: Prioritize headless, terminal-runnable tools
 - **Rational Grounding**: Technical language, not mystical jargon
