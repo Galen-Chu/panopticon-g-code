@@ -1,38 +1,44 @@
 """Tests for the Core correlation engine."""
 import json
 import pytest
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 from core.feedback.correlator import CorrelationEngine
 
 
 @pytest.fixture
 def data_dir(tmp_path):
-    """Create temp data with journal entries and health reports."""
+    """Create temp data with journal entries and health reports.
+
+    Dates are generated relative to today — the journal loader only reads
+    the last N days, so hardcoded dates would make the suite rot over time.
+    """
     journal_dir = tmp_path / "journal"
     journal_dir.mkdir()
     monitor_dir = tmp_path / "monitor"
     monitor_dir.mkdir()
 
-    # Journal entries
-    for i, (d, text) in enumerate([
-        ("2026-08-15", "Feeling anxious about work"),
-        ("2026-08-16", "Happy and curious about learning"),
-        ("2026-08-17", "Calm morning reflection"),
-        ("2026-08-18", "Anxious again, deadline approaching"),
-    ]):
+    # Journal entries (dates relative to today)
+    day = lambda offset: (date.today() - timedelta(days=offset)).isoformat()
+    for d, text in [
+        (day(3), "Feeling anxious about work"),
+        (day(2), "Happy and curious about learning"),
+        (day(1), "Calm morning reflection"),
+        (day(0), "Anxious again, deadline approaching"),
+    ]:
         (journal_dir / f"{d}.json").write_text(
             json.dumps({"date": d, "entry": text}), encoding="utf-8"
         )
 
-    # Health reports (2 healthy, 1 with issues)
+    # Health reports (2 healthy, 1 with issues), timestamps matching journal dates
     reports = [
-        {"timestamp": "2026-08-15T01:00:00", "healthy": 8, "issues": 0, "repos": []},
-        {"timestamp": "2026-08-16T01:00:00", "healthy": 8, "issues": 0, "repos": []},
-        {"timestamp": "2026-08-17T01:00:00", "healthy": 7, "issues": 1, "repos": []},
+        {"timestamp": f"{day(3)}T01:00:00", "healthy": 8, "issues": 0, "repos": []},
+        {"timestamp": f"{day(2)}T01:00:00", "healthy": 8, "issues": 0, "repos": []},
+        {"timestamp": f"{day(1)}T01:00:00", "healthy": 7, "issues": 1, "repos": []},
     ]
     for i, report in enumerate(reports):
-        (monitor_dir / f"health_2026081{i}_010000.json").write_text(
+        stamp = report["timestamp"].replace("-", "").replace(":", "")
+        (monitor_dir / f"health_{stamp}.json").write_text(
             json.dumps(report), encoding="utf-8"
         )
 

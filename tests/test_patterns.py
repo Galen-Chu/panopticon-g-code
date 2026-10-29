@@ -2,18 +2,25 @@
 import json
 import pytest
 from pathlib import Path
-from datetime import date
+from datetime import date, timedelta
 
 from inner.patterns.analyzer import PatternAnalyzer, EMOTION_KEYWORDS, BEHAVIOR_PATTERNS
 
 
 @pytest.fixture
 def journal_dir(tmp_path):
-    """Create a temp journal directory with sample entries."""
+    """Create a temp journal directory with sample entries.
+
+    Dates are generated relative to today — the analyzer only looks at the
+    last N days, so hardcoded dates would make the suite rot over time.
+    """
     entries = [
-        {"date": "2026-08-15", "entry": "Feeling anxious about the deadline. Work stress is high."},
-        {"date": "2026-08-16", "entry": "Happy and grateful today. Morning reflection went well."},
-        {"date": "2026-08-17", "entry": "Curious about the new project. Learning something exciting."},
+        {"date": (date.today() - timedelta(days=2)).isoformat(),
+         "entry": "Feeling anxious about the deadline. Work stress is high."},
+        {"date": (date.today() - timedelta(days=1)).isoformat(),
+         "entry": "Happy and grateful today. Morning reflection went well."},
+        {"date": date.today().isoformat(),
+         "entry": "Curious about the new project. Learning something exciting."},
     ]
     for entry in entries:
         filepath = tmp_path / f"{entry['date']}.json"
