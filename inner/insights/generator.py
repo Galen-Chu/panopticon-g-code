@@ -3,14 +3,37 @@ Inner Axis — AI Insight Generator · AI 洞察生成
 
 Uses Google Gemini to transform pattern analysis results into
 bilingual, actionable insights. Falls back to rule-based
-insights when the API is unavailable.
+insights when the API is unavailable (logged, never silent).
 """
 import json
 import os
-from datetime import datetime
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 INSIGHTS_DIR = Path(__file__).parent.parent.parent / "data" / "insights"
+
+# gemini-1.5-pro 已下線、google-generativeai 舊 SDK 已淘汰 —— 與 sync-g-code
+# 一致改用 google-genai SDK 與現行模型
+GEMINI_MODEL = "gemini-3.6-flash"
+RETRYABLE_CODES = {429, 500, 502, 503, 504}
+MAX_ATTEMPTS = 3
+BACKOFF_SECONDS = 15
+
+RESPONSE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "en": {"type": "string", "description": "2-3 sentence insight in English"},
+        "zh": {"type": "string", "description": "2-3 sentence insight in Traditional Chinese (繁體中文)"},
+        "suggestion_en": {"type": "string", "description": "One actionable suggestion in English"},
+        "suggestion_zh": {"type": "string", "description": "One actionable suggestion in Traditional Chinese (繁體中文)"},
+    },
+    "required": ["en", "zh", "suggestion_en", "suggestion_zh"],
+}
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 class InsightGenerator:
@@ -18,20 +41,21 @@ class InsightGenerator:
 
     def __init__(self, api_key: str = None):
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
-        self.model = None
+        self.client = None
 
     def _init_gemini(self) -> bool:
-        """Initialize Gemini client if API key is available."""
+        """Initialize the google-genai client if an API key is available."""
         if not self.api_key:
             return False
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel("gemini-1.5-pro")
+            from google import genai
+            self.client = genai.Client(api_key=self.api_key)
             return True
         except ImportError:
+            print("  ⚠ google-genai not installed — using rule-based insights")
             return False
-        except Exception:
+        except Exception as e:
+            print(f"  ⚠ Gemini client init failed ({e}) — using rule-based insights")
             return False
 
     def generate(self, pattern_data: dict) -> dict:
@@ -40,14 +64,12 @@ class InsightGenerator:
 
         Uses Gemini AI when available; falls back to rule-based insights.
         """
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = _utcnow().isoformat()
 
         if self._init_gemini():
-            insight_text = self._gemini_insight(pattern_data)
-            source = "gemini"
+            insight_text, source = self._gemini_insight(pattern_data)
         else:
-            insight_text = self._rule_based_insight(pattern_data)
-            source = "rules"
+            insight_text, source = self._rule_based_insight(pattern_data), "rules"
 
         result = {
             "timestamp": timestamp,
@@ -61,26 +83,44 @@ class InsightGenerator:
 
         # Save to file
         INSIGHTS_DIR.mkdir(parents=True, exist_ok=True)
-        filepath = INSIGHTS_DIR / f"insight_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+        filepath = INSIGHTS_DIR / f"insight_{_utcnow().strftime('%Y%m%d_%H%M%S')}.json"
         filepath.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
 
         return result
 
-    def _gemini_insight(self, pattern_data: dict) -> dict:
-        """Generate insight using Gemini AI."""
+    def _gemini_insight(self, pattern_data: dict) -> tuple:
+        """Generate insight using Gemini AI. Returns (insight, source)."""
+        from google.genai import errors as genai_errors
+        from google.genai import types
+
         prompt = self._build_prompt(pattern_data)
-        try:
-            response = self.model.generate_content(prompt)
-            text = response.text
-            # Try to parse as JSON, or wrap as plain text
+        config = types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=RESPONSE_SCHEMA,
+        )
+
+        for attempt in range(1, MAX_ATTEMPTS + 1):
             try:
-                parsed = json.loads(text)
-                return parsed
-            except json.JSONDecodeError:
-                return {"en": text, "zh": "", "suggestion_en": "", "suggestion_zh": ""}
-        except Exception as e:
-            # Fallback to rules on API error
-            return self._rule_based_insight(pattern_data)
+                response = self.client.models.generate_content(
+                    model=GEMINI_MODEL, contents=prompt, config=config)
+                parsed = json.loads(response.text)
+                missing = [k for k in RESPONSE_SCHEMA["required"] if not parsed.get(k)]
+                if missing:
+                    raise ValueError(f"missing keys: {', '.join(missing)}")
+                return parsed, "gemini"
+            except genai_errors.APIError as e:
+                code = getattr(e, "code", None)
+                if code not in RETRYABLE_CODES or attempt == MAX_ATTEMPTS:
+                    print(f"  ⚠ Gemini API failed (HTTP {code}) — using rule-based insights")
+                    break
+                print(f"  ⚠ Gemini API transient error (HTTP {code}), "
+                      f"retry {attempt}/{MAX_ATTEMPTS - 1} in {BACKOFF_SECONDS}s…")
+                time.sleep(BACKOFF_SECONDS)
+            except (json.JSONDecodeError, ValueError) as e:
+                print(f"  ⚠ Gemini response unparsable ({e}) — using rule-based insights")
+                break
+
+        return self._rule_based_insight(pattern_data), "rules"
 
     def _build_prompt(self, pattern_data: dict) -> str:
         """Build a bilingual prompt for Gemini."""
@@ -91,21 +131,13 @@ class InsightGenerator:
 
         return f"""
 You are a Panopticon awareness guide. Analyze these self-reflection
-patterns and provide actionable insights. Respond in JSON format.
+patterns and provide actionable insights.
 
 Pattern data:
 - Emotions detected: {emotions}
 - Behavioral contexts: {behaviors}
 - Reflection trend: {trends}
 - Top keywords: {keywords}
-
-Return JSON with these exact keys:
-{{
-  "en": "2-3 sentence insight in English",
-  "zh": "2-3 sentence insight in Traditional Chinese (繁體中文)",
-  "suggestion_en": "One actionable suggestion in English",
-  "suggestion_zh": "One actionable suggestion in Traditional Chinese (繁體中文)"
-}}
 
 Tone: Rational, technical, grounding. No mystical language.
 """

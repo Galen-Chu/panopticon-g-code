@@ -6,7 +6,7 @@ Inner observations inform ecosystem priorities; ecosystem health
 reveals personal patterns. Both feed into adaptive adjustments.
 """
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -57,7 +57,7 @@ class FeedbackEngine:
                 reflection_on_issues += 1
 
         insight = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "type": "correlation",
             "data": {
                 "total_reflections": len(journal_entries),
@@ -70,7 +70,7 @@ class FeedbackEngine:
         }
 
         # Save insight
-        filepath = self.insights_dir / f"insight_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+        filepath = self.insights_dir / f"insight_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
         filepath.write_text(json.dumps(insight, indent=2, ensure_ascii=False), encoding="utf-8")
 
         return insight

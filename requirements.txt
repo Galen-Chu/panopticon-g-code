@@ -1,14 +1,8 @@
 # Core
-python-dotenv==1.0.0
-requests==2.31.0
+requests>=2.32.4  # 2.32.x fixes CVE-2024-35195 / CVE-2024-47081
 
-# AI Integration (optional)
-google-generativeai==0.3.2
-
-# Data Processing
-python-dateutil==2.8.2
-pytz==2023.3
+# AI Integration (optional; falls back to rule-based insights without it)
+google-genai
 
 # Testing
-pytest==7.4.4
-pytest-cov==4.1.0
+pytest>=7.4

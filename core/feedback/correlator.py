@@ -6,7 +6,7 @@ health to reveal deeper insights about the relationship between
 personal consciousness and project ecosystem states.
 """
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 DATA_DIR = Path(__file__).parent.parent.parent / "data"
@@ -44,7 +44,7 @@ class CorrelationEngine:
 
         result = {
             "status": "ok",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "analysis_period_days": days,
             "emotion_correlation": emotion_correlation,
             "behavior_correlation": behavior_correlation,
@@ -53,7 +53,7 @@ class CorrelationEngine:
         }
 
         # Save
-        filepath = self.insights_dir / f"correlation_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+        filepath = self.insights_dir / f"correlation_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
         filepath.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
 
         return result
@@ -199,12 +199,17 @@ class CorrelationEngine:
         entries = []
         if not self.journal_dir.exists():
             return entries
-        cutoff = datetime.now() - timedelta(days=days)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
         for filepath in sorted(self.journal_dir.glob("*.json"), reverse=True):
             try:
                 entry = json.loads(filepath.read_text(encoding="utf-8"))
                 entry_date = entry.get("date", "")
-                if entry_date and datetime.fromisoformat(entry_date) >= cutoff:
+                if not entry_date:
+                    continue
+                entry_dt = datetime.fromisoformat(entry_date)
+                if entry_dt.tzinfo is None:
+                    entry_dt = entry_dt.replace(tzinfo=timezone.utc)
+                if entry_dt >= cutoff:
                     entries.append(entry)
             except (json.JSONDecodeError, ValueError):
                 continue

@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 venv/
 *.egg-info/
+.pytest_cache/
 
 # Data (journal entries and health reports are personal/runtime data)
 data/

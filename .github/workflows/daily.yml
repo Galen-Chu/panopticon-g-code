@@ -2,8 +2,13 @@ name: Panopticon Daily Cycle
 
 on:
   schedule:
-    - cron: '0 1 * * *'  # 01:00 UTC = 09:00 Taiwan
+    # 01:23 UTC = 09:23 Taiwan（離開整點，避開 GitHub Actions 排程尖峰）
+    - cron: '23 1 * * *'
   workflow_dispatch:
+
+permissions:
+  contents: write   # data-archive job commits daily health data back to main
+  issues: write     # alerter opens an issue when anomalies are detected
 
 jobs:
   ecosystem-monitor:
@@ -22,9 +27,15 @@ jobs:
       run: pip install -r requirements.txt
 
     - name: Run ecosystem health check
-      run: |
-        python -m outer.monitor.checker --all --save
-        python -m outer.alerts.alerter --check
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: python -m outer.monitor.checker --all --save
+
+    - name: Check alerts (opens a GitHub issue on anomalies)
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PANOPTICON_ALERT_ISSUES: "1"
+      run: python -m outer.alerts.alerter --check
 
     - name: Upload health data
       uses: actions/upload-artifact@v4
@@ -59,6 +70,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Download health data
+      uses: actions/download-artifact@v4
+      with:
+        name: ecosystem-health
+        path: data/monitor
+
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
@@ -80,3 +97,34 @@ jobs:
     - name: Run correlation
       run: python -m core.feedback.correlator --days 30
       continue-on-error: true
+
+  data-archive:
+    name: Archive Daily Data
+    runs-on: ubuntu-latest
+    needs: [ecosystem-monitor, correlation-analysis]
+    # 每日健康報告回存 main —— 資料長期累積，且讓 repo 保持活躍
+    # （GitHub 會停用 60 天無活動 repo 的排程工作流程）
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download health data
+      uses: actions/download-artifact@v4
+      with:
+        name: ecosystem-health
+        path: data/monitor
+
+    - name: Configure git identity
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+    - name: Commit and push daily report
+      run: |
+        git add -f data/monitor
+        if git diff --cached --quiet; then
+          echo "No new data to archive."
+        else
+          git commit -m "data: archive $(date -u +%F) ecosystem health report"
+          git push
+        fi

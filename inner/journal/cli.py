@@ -6,7 +6,7 @@ Part of the Panopticon G-Code dual-axis awareness system.
 """
 import os
 import json
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from pathlib import Path
 
 # Journal storage directory (relative to project root)
@@ -49,7 +49,7 @@ def save_entry(entry_text: str, for_date: date = None) -> Path:
 
     entry = {
         "date": for_date.isoformat(),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "prompt": get_prompt(for_date),
         "entry": entry_text,
     }

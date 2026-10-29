@@ -63,8 +63,8 @@ G-Code 生態系統本身就是個人意識成長的具現。Panopticon 觀看�
 
 ### Outer Axis (外監) — G-Code Ecosystem Monitoring
 
-- **Health Dashboard**: Real-time status of all G-Code repositories
-- **CI/CD Monitoring**: Pipeline health across the ecosystem
+- **Health Dashboard**: Real-time status of all ecosystem repositories
+- **CI/CD Monitoring**: Recent workflow-run failure rates across the ecosystem
 - **Dependency Awareness**: Cross-repo impact analysis
 - **Visual Observatory**: D3.js/Plotly interactive dashboard
 
@@ -84,9 +84,9 @@ Observations from both axes feed into each other:
 | `inner/journal` | Self-reflection prompts & entries | Python CLI |
 | `inner/patterns` | Pattern detection in behavior | Python + ML |
 | `inner/insights` | Insight generation from data | Gemini AI |
-| `outer/monitor` | G-Code repo health checker | Python + GitHub API |
+| `outer/monitor` | Ecosystem repo + CI/CD health checker | Python + GitHub API |
 | `outer/dashboard` | Ecosystem visualization | D3.js / Plotly |
-| `outer/alerts` | Anomaly detection & alerts | Python + Webhooks |
+| `outer/alerts` | Anomaly detection & alerts | Python + GitHub Issues / Webhooks |
 | `core/feedback` | Bidirectional feedback engine | Python |
 
 ---
@@ -186,6 +186,22 @@ Inherited from the G-Code ecosystem:
 - [x] Bidirectional data flow between axes
 - [x] Correlation engine (inner patterns ↔ outer health)
 - [x] Adaptive adjustment recommendations
+
+---
+
+## 🔧 Operations · 維運
+
+- **Daily cycle** runs at 09:23 Taiwan time (01:23 UTC, off the hour to dodge
+  GitHub schedule congestion); tests run on every push/PR (`.github/workflows/tests.yml`).
+- **Data archive**: each day's health report is committed back to `data/monitor/`
+  by the workflow — this keeps history accumulating in-repo and keeps the repo
+  active (GitHub auto-disables scheduled workflows after 60 days of inactivity).
+- **Alerts** open a GitHub issue in this repo (deduplicated per day) when a repo
+  goes non-healthy, a pipeline fails repeatedly (≥2 of the last 15 runs), open
+  issues pile up, or a repo goes stale (30+ days without a push — an early hint
+  before GitHub's 60-day disable).
+- **AI insights** use `google-genai` with `gemini-3.6-flash`; without
+  `GEMINI_API_KEY` they fall back to rule-based insights (logged, never silent).
 
 ---
 
