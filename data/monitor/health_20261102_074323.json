@@ -1,0 +1,191 @@
+{
+  "timestamp": "2026-11-02T07:43:23.634441+00:00",
+  "total_repos": 10,
+  "healthy": 10,
+  "issues": 0,
+  "ci_failing": 2,
+  "repos": [
+    {
+      "repo": "spiritual-g-code",
+      "status": "healthy",
+      "stars": 1,
+      "open_issues": 0,
+      "last_push": "2026-09-04T09:05:25Z",
+      "default_branch": "main",
+      "size_kb": 477,
+      "ci": {
+        "repo": "spiritual-g-code",
+        "status": "ok",
+        "checked_runs": 15,
+        "failed_runs": 1,
+        "threshold": 2,
+        "last_failure": {
+          "workflow": "Documentation Check",
+          "created_at": "2026-08-14T07:36:14Z"
+        }
+      }
+    },
+    {
+      "repo": "sync-g-code",
+      "status": "healthy",
+      "stars": 1,
+      "open_issues": 0,
+      "last_push": "2026-10-06T08:12:24Z",
+      "default_branch": "main",
+      "size_kb": 39,
+      "ci": {
+        "repo": "sync-g-code",
+        "status": "ok",
+        "checked_runs": 15,
+        "failed_runs": 0,
+        "threshold": 2,
+        "last_failure": null
+      }
+    },
+    {
+      "repo": "psychological-g-code",
+      "status": "healthy",
+      "stars": 1,
+      "open_issues": 0,
+      "last_push": "2026-09-04T09:02:03Z",
+      "default_branch": "main",
+      "size_kb": 68,
+      "ci": {
+        "repo": "psychological-g-code",
+        "status": "ok",
+        "checked_runs": 0,
+        "failed_runs": 0,
+        "threshold": 2,
+        "last_failure": null
+      }
+    },
+    {
+      "repo": "physiological-g-code",
+      "status": "healthy",
+      "stars": 1,
+      "open_issues": 0,
+      "last_push": "2026-09-04T09:02:32Z",
+      "default_branch": "main",
+      "size_kb": 190,
+      "ci": {
+        "repo": "physiological-g-code",
+        "status": "ok",
+        "checked_runs": 0,
+        "failed_runs": 0,
+        "threshold": 2,
+        "last_failure": null
+      }
+    },
+    {
+      "repo": "program-g-code",
+      "status": "healthy",
+      "stars": 1,
+      "open_issues": 0,
+      "last_push": "2026-10-29T01:00:23Z",
+      "default_branch": "main",
+      "size_kb": 321,
+      "ci": {
+        "repo": "program-g-code",
+        "status": "ok",
+        "checked_runs": 15,
+        "failed_runs": 0,
+        "threshold": 2,
+        "last_failure": null
+      }
+    },
+    {
+      "repo": "skill-g-code",
+      "status": "healthy",
+      "stars": 1,
+      "open_issues": 0,
+      "last_push": "2026-09-04T09:03:08Z",
+      "default_branch": "main",
+      "size_kb": 47,
+      "ci": {
+        "repo": "skill-g-code",
+        "status": "ok",
+        "checked_runs": 0,
+        "failed_runs": 0,
+        "threshold": 2,
+        "last_failure": null
+      }
+    },
+    {
+      "repo": "spec-g-code",
+      "status": "healthy",
+      "stars": 1,
+      "open_issues": 0,
+      "last_push": "2026-09-04T09:03:37Z",
+      "default_branch": "main",
+      "size_kb": 35,
+      "ci": {
+        "repo": "spec-g-code",
+        "status": "ok",
+        "checked_runs": 4,
+        "failed_runs": 1,
+        "threshold": 2,
+        "last_failure": {
+          "workflow": "CI - Spec Validation",
+          "created_at": "2026-08-17T02:01:09Z"
+        }
+      }
+    },
+    {
+      "repo": "panopticon-g-code",
+      "status": "healthy",
+      "stars": 0,
+      "open_issues": 5,
+      "last_push": "2026-11-01T07:38:07Z",
+      "default_branch": "main",
+      "size_kb": 53,
+      "ci": {
+        "repo": "panopticon-g-code",
+        "status": "ok",
+        "checked_runs": 15,
+        "failed_runs": 0,
+        "threshold": 2,
+        "last_failure": null
+      }
+    },
+    {
+      "repo": "pms-test-automation-script",
+      "status": "healthy",
+      "stars": 1,
+      "open_issues": 2,
+      "last_push": "2026-11-02T02:25:04Z",
+      "default_branch": "main",
+      "size_kb": 2002,
+      "ci": {
+        "repo": "pms-test-automation-script",
+        "status": "failing",
+        "checked_runs": 15,
+        "failed_runs": 2,
+        "threshold": 2,
+        "last_failure": {
+          "workflow": "Dependabot Auto-merge",
+          "created_at": "2026-11-02T00:18:41Z"
+        }
+      }
+    },
+    {
+      "repo": "TEXT-Message",
+      "status": "healthy",
+      "stars": 0,
+      "open_issues": 0,
+      "last_push": "2026-11-02T06:53:16Z",
+      "default_branch": "main",
+      "size_kb": 1265,
+      "ci": {
+        "repo": "TEXT-Message",
+        "status": "failing",
+        "checked_runs": 15,
+        "failed_runs": 2,
+        "threshold": 2,
+        "last_failure": {
+          "workflow": "Deploy to GitHub Pages",
+          "created_at": "2026-10-24T03:25:08Z"
+        }
+      }
+    }
+  ]
+}
