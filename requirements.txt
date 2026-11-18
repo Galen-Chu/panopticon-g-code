@@ -8,5 +8,5 @@ requests==2.34.2  # 2.32.x fixes CVE-2024-35195 / CVE-2024-47081
 google-genai==3.3.0
 
 # Testing & linting
-pytest==9.1.1
+pytest==9.2.0
 ruff==0.17.5
