@@ -66,3 +66,33 @@ class TestInsightGenerator:
         assert "suggestion_en" in result
         assert "suggestion_zh" in result
         assert result["timestamp"]
+
+
+class TestNoDataSkip:
+    """Without journal data the generator must skip — no API call, no file."""
+
+    def test_generate_skips_when_no_data(self, tmp_path, monkeypatch):
+        from inner.insights import generator as gen_module
+        monkeypatch.setattr(gen_module, "INSIGHTS_DIR", tmp_path)
+
+        gen = InsightGenerator(api_key="")
+        result = gen.generate({"status": "no_data", "message": "No journal entries"})
+
+        assert result["source"] == "skipped"
+        assert result["status"] == "no_data"
+        assert list(tmp_path.iterdir()) == []  # nothing written
+
+    def test_no_data_never_reaches_gemini(self, tmp_path, monkeypatch):
+        from inner.insights import generator as gen_module
+        monkeypatch.setattr(gen_module, "INSIGHTS_DIR", tmp_path)
+
+        gen = InsightGenerator(api_key="fake-key")
+        gen._init_gemini = lambda: True  # pretend Gemini is ready
+
+        def fail(pattern_data):
+            raise AssertionError("Gemini must not be called without journal data")
+
+        gen._gemini_insight = fail
+        result = gen.generate({"status": "no_data"})
+
+        assert result["source"] == "skipped"

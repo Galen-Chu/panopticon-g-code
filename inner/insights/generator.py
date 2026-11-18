@@ -62,9 +62,22 @@ class InsightGenerator:
         """
         Generate an insight from pattern analysis results.
 
-        Uses Gemini AI when available; falls back to rule-based insights.
+        Skips entirely (no API call, no file written) when the analyzer
+        found no journal entries — otherwise the daily cycle burns a
+        Gemini call on empty data. Uses Gemini AI when available; falls
+        back to rule-based insights.
         """
         timestamp = _utcnow().isoformat()
+
+        if pattern_data.get("status") == "no_data":
+            print("  · No journal entries to analyze — skipping insight generation"
+                  " · 無日誌資料，跳過洞察生成")
+            return {
+                "timestamp": timestamp,
+                "source": "skipped",
+                "status": "no_data",
+                "message": "No journal entries to analyze · 無日誌資料可分析",
+            }
 
         if self._init_gemini():
             insight_text, source = self._gemini_insight(pattern_data)
