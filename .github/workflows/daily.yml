@@ -7,12 +7,17 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write   # data-archive job commits daily health data back to main
+  contents: write   # archive step commits daily health data back to main
   issues: write     # alerter opens an issue when anomalies are detected
 
+# Serialized so two triggered runs can't race on the archive push
+concurrency:
+  group: panopticon-daily-cycle
+  cancel-in-progress: false
+
 jobs:
-  ecosystem-monitor:
-    name: Ecosystem Health Check
+  daily-cycle:
+    name: Monitor → Alerts → Inner Axis → Archive
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -22,10 +27,12 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
+        cache: 'pip'
 
     - name: Install dependencies
       run: pip install -r requirements.txt
 
+    # ── Outer axis · 外監 ──────────────────────────────────────────
     - name: Run ecosystem health check
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -37,52 +44,12 @@ jobs:
         PANOPTICON_ALERT_ISSUES: "1"
       run: python -m outer.alerts.alerter --check
 
-    - name: Upload health data
-      uses: actions/upload-artifact@v4
-      with:
-        name: ecosystem-health
-        path: data/monitor/
-        retention-days: 90
-
-  inner-reflection:
-    name: Daily Reflection Prompt
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-
-    - name: Install dependencies
-      run: pip install -r requirements.txt
-
-    - name: Show today's prompt
+    # ── Inner axis · 內觀 ──────────────────────────────────────────
+    # Journal data is local-only (gitignored), so these are no-ops in CI
+    # until journal entries exist here; insights skip themselves on empty
+    # data. Kept continue-on-error so a bad day can't block the archive.
+    - name: Show today's reflection prompt
       run: python -m inner.journal.cli --today
-
-  correlation-analysis:
-    name: Cross-Axis Correlation
-    runs-on: ubuntu-latest
-    needs: ecosystem-monitor
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Download health data
-      uses: actions/download-artifact@v4
-      with:
-        name: ecosystem-health
-        path: data/monitor
-
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-
-    - name: Install dependencies
-      run: pip install -r requirements.txt
 
     - name: Run pattern analysis
       run: python -m inner.patterns.analyzer --days 30
@@ -94,33 +61,17 @@ jobs:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       continue-on-error: true
 
-    - name: Run correlation
+    - name: Run cross-axis correlation
       run: python -m core.feedback.correlator --days 30
       continue-on-error: true
 
-  data-archive:
-    name: Archive Daily Data
-    runs-on: ubuntu-latest
-    needs: [ecosystem-monitor, correlation-analysis]
+    # ── Archive · 回存 ─────────────────────────────────────────────
     # 每日健康報告回存 main —— 資料長期累積，且讓 repo 保持活躍
     # （GitHub 會停用 60 天無活動 repo 的排程工作流程）
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Download health data
-      uses: actions/download-artifact@v4
-      with:
-        name: ecosystem-health
-        path: data/monitor
-
-    - name: Configure git identity
+    - name: Archive daily health data (commit to main)
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-    - name: Commit and push daily report
-      run: |
         git add -f data/monitor
         if git diff --cached --quiet; then
           echo "No new data to archive."
