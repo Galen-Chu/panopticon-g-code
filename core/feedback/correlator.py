@@ -15,10 +15,14 @@ DATA_DIR = Path(__file__).parent.parent.parent / "data"
 class CorrelationEngine:
     """Advanced correlation between inner and outer axes."""
 
-    def __init__(self):
-        self.journal_dir = DATA_DIR / "journal"
-        self.monitor_dir = DATA_DIR / "monitor"
-        self.insights_dir = DATA_DIR / "insights"
+    def __init__(self, data_dir: Path = None):
+        """data_dir: 根目錄（下含 journal/、monitor/、insights/）。預設為本
+        repo 的 data/；跨 repo 使用（如 Obsidian_Journal 的內觀管線）可
+        指向自備的暫存結構。"""
+        root = data_dir or DATA_DIR
+        self.journal_dir = root / "journal"
+        self.monitor_dir = root / "monitor"
+        self.insights_dir = root / "insights"
         self.insights_dir.mkdir(parents=True, exist_ok=True)
 
     def full_analysis(self, days: int = 30) -> dict:

@@ -69,6 +69,14 @@ class TestCorrelationEngine:
         assert "timing_correlation" in result
         assert "recommendations" in result
 
+    def test_explicit_data_dir_param(self, data_dir):
+        """Cross-repo use (Obsidian_Journal pipeline) passes data_dir directly."""
+        engine = CorrelationEngine(data_dir=data_dir)
+        assert engine.journal_dir == data_dir / "journal"
+        assert engine.monitor_dir == data_dir / "monitor"
+        result = engine.full_analysis(days=30)
+        assert result["status"] == "ok"
+
     def test_emotions_correlated(self, data_dir, monkeypatch):
         from core.feedback import correlator as corr_module
         monkeypatch.setattr(corr_module, "DATA_DIR", data_dir)
