@@ -1,6 +1,4 @@
 """Tests for the Inner Axis AI insight generator."""
-import json
-import pytest
 
 from inner.insights.generator import InsightGenerator
 

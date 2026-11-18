@@ -1,11 +1,8 @@
 """Tests for the Inner Axis journal module."""
 import json
 from datetime import date
-from pathlib import Path
 
-import pytest
-
-from inner.journal.cli import get_prompt, save_entry, load_entries, PROMPTS
+from inner.journal.cli import PROMPTS, get_prompt, load_entries, save_entry
 
 
 class TestGetPrompt:

@@ -4,9 +4,8 @@ Inner Axis — Self-Reflection Journal · 自我反思日誌
 Daily consciousness observation prompts and entry management.
 Part of the Panopticon G-Code dual-axis awareness system.
 """
-import os
 import json
-from datetime import datetime, date, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 # Journal storage directory (relative to project root)
@@ -49,7 +48,7 @@ def save_entry(entry_text: str, for_date: date = None) -> Path:
 
     entry = {
         "date": for_date.isoformat(),
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "prompt": get_prompt(for_date),
         "entry": entry_text,
     }
@@ -89,13 +88,13 @@ def main():
     if args.today or not any(vars(args).values()):
         prompt = get_prompt()
         print(f"\n{'='*50}")
-        print(f"  Panopticon Daily Reflection")
+        print("  Panopticon Daily Reflection")
         print(f"  {date.today().isoformat()}")
         print(f"{'='*50}\n")
         print(f"  {prompt['en']}")
         print(f"  {prompt['zh']}\n")
         print(f"{'='*50}")
-        print(f"  Usage: python -m inner.journal.cli --write 'your reflection'")
+        print("  Usage: python -m inner.journal.cli --write 'your reflection'")
         print(f"{'='*50}\n")
 
     elif args.write:

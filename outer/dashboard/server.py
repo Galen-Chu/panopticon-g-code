@@ -68,10 +68,10 @@ def main():
     args = parser.parse_args()
 
     server = HTTPServer(("localhost", args.port), DashboardHandler)
-    print(f"\n  Panopticon Dashboard")
+    print("\n  Panopticon Dashboard")
     print(f"  http://localhost:{args.port}")
     print(f"  API: http://localhost:{args.port}/api/health")
-    print(f"  Press Ctrl+C to stop\n")
+    print("  Press Ctrl+C to stop\n")
 
     if not args.no_browser:
         webbrowser.open(f"http://localhost:{args.port}")

@@ -1,8 +1,12 @@
+# Pinned; Dependabot bumps deliberately — its PRs run the test suite
+# before merge, so updates are verified instead of accidental.
+
 # Core
-requests>=2.32.4  # 2.32.x fixes CVE-2024-35195 / CVE-2024-47081
+requests==2.32.4  # 2.32.x fixes CVE-2024-35195 / CVE-2024-47081
 
 # AI Integration (optional; falls back to rule-based insights without it)
-google-genai
+google-genai==2.17.0
 
-# Testing
-pytest>=7.4
+# Testing & linting
+pytest==9.1.1
+ruff==0.16.2

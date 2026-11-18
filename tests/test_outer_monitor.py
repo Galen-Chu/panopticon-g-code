@@ -1,8 +1,12 @@
 """Tests for the Outer Axis ecosystem monitor."""
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from outer.monitor.checker import (
-    check_all_repos, check_repo_health, G_CODE_REPOS, MAX_ATTEMPTS,
+    G_CODE_REPOS,
+    MAX_ATTEMPTS,
+    check_all_repos,
+    check_repo_health,
+    check_workflow_health,
 )
 
 
@@ -107,3 +111,42 @@ class TestParallelChecks:
         assert mock_repo.call_count == 3
         assert mock_ci.call_count == 3
         assert all(r["ci"]["status"] == "ok" for r in results)
+
+
+class TestWorkflowHealth:
+    @staticmethod
+    def _runs_response(conclusions):
+        runs = [{"name": "CI", "status": "completed", "conclusion": c,
+                 "created_at": f"2026-11-{i + 1:02d}T00:00:00Z"}
+                for i, c in enumerate(conclusions)]
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.json.return_value = {"workflow_runs": runs}
+        return resp
+
+    @patch("outer.monitor.checker.requests")
+    def test_failing_ci_detected(self, mock_requests):
+        mock_requests.get.return_value = self._runs_response(
+            ["failure", "failure", "success", "success"])
+        result = check_workflow_health("test-repo")
+        assert result["status"] == "failing"
+        assert result["checked_runs"] == 4
+        assert result["failed_runs"] == 2
+        assert result["last_failure"]["workflow"] == "CI"
+
+    @patch("outer.monitor.checker.requests")
+    def test_healthy_ci(self, mock_requests):
+        mock_requests.get.return_value = self._runs_response(["success"] * 3)
+        result = check_workflow_health("test-repo")
+        assert result["status"] == "ok"
+        assert result["failed_runs"] == 0
+        assert result["last_failure"] is None
+
+    @patch("outer.monitor.checker.requests")
+    def test_api_error_is_unavailable(self, mock_requests):
+        resp = MagicMock()
+        resp.status_code = 400  # non-retryable
+        mock_requests.get.return_value = resp
+        result = check_workflow_health("test-repo")
+        assert result["status"] == "unavailable"
+        assert result["code"] == 400

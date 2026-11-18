@@ -5,11 +5,11 @@ Monitors the health of the ecosystem repositories via the GitHub API:
 repository metadata plus CI/CD (workflow run) health.
 Part of the Panopticon G-Code dual-axis awareness system.
 """
-import os
 import json
+import os
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 try:
@@ -89,7 +89,7 @@ def _api_get(url: str, params: dict = None):
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def check_repo_health(repo_name: str) -> dict:
@@ -222,7 +222,7 @@ def main():
     args = parser.parse_args()
 
     print(f"\n{'='*50}")
-    print(f"  Panopticon Ecosystem Monitor")
+    print("  Panopticon Ecosystem Monitor")
     print(f"  {_utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
     print(f"{'='*50}\n")
 

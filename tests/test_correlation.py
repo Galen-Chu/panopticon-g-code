@@ -1,7 +1,8 @@
 """Tests for the Core correlation engine."""
 import json
+from datetime import date, timedelta
+
 import pytest
-from datetime import datetime, date, timedelta
 
 from core.feedback.correlator import CorrelationEngine
 
@@ -19,7 +20,8 @@ def data_dir(tmp_path):
     monitor_dir.mkdir()
 
     # Journal entries (dates relative to today)
-    day = lambda offset: (date.today() - timedelta(days=offset)).isoformat()
+    def day(offset):
+        return (date.today() - timedelta(days=offset)).isoformat()
     for d, text in [
         (day(3), "Feeling anxious about work"),
         (day(2), "Happy and curious about learning"),
@@ -36,7 +38,7 @@ def data_dir(tmp_path):
         {"timestamp": f"{day(2)}T01:00:00", "healthy": 8, "issues": 0, "repos": []},
         {"timestamp": f"{day(1)}T01:00:00", "healthy": 7, "issues": 1, "repos": []},
     ]
-    for i, report in enumerate(reports):
+    for report in reports:
         stamp = report["timestamp"].replace("-", "").replace(":", "")
         (monitor_dir / f"health_{stamp}.json").write_text(
             json.dumps(report), encoding="utf-8"

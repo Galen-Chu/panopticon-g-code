@@ -8,7 +8,7 @@ insights when the API is unavailable (logged, never silent).
 import json
 import os
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 INSIGHTS_DIR = Path(__file__).parent.parent.parent / "data" / "insights"
@@ -33,7 +33,7 @@ RESPONSE_SCHEMA = {
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class InsightGenerator:
