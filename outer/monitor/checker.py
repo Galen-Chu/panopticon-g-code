@@ -7,6 +7,8 @@ Part of the Panopticon G-Code dual-axis awareness system.
 """
 import os
 import json
+import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -38,6 +40,16 @@ MONITOR_DIR = Path(__file__).parent.parent.parent / "data" / "monitor"
 CI_WINDOW_RUNS = 15
 CI_FAILURE_THRESHOLD = 2
 
+# Rate limits / server errors worth retrying. GitHub's secondary rate
+# limit answers 403 with a Retry-After header, which we honor.
+RETRYABLE_CODES = {403, 429, 500, 502, 503, 504}
+MAX_ATTEMPTS = 3
+BASE_BACKOFF_SECONDS = 5
+
+# Repos are checked in parallel; 5 workers × 2 calls keeps us far below
+# rate limits while turning 20 sequential calls into ~4 rounds.
+MAX_PARALLEL_CHECKS = 5
+
 
 def _api_headers() -> dict:
     """Auth headers when GITHUB_TOKEN is present (raises rate limit 60/h → 1000/h)."""
@@ -46,6 +58,34 @@ def _api_headers() -> dict:
         return {"Authorization": f"Bearer {token}",
                 "Accept": "application/vnd.github+json"}
     return {"Accept": "application/vnd.github+json"}
+
+
+def _retry_delay(response, attempt: int) -> float:
+    """Seconds to wait before the next attempt: Retry-After if GitHub sent
+    one, otherwise linear backoff."""
+    value = response.headers.get("Retry-After", "")
+    try:
+        return max(float(value), 1.0)
+    except (TypeError, ValueError):
+        return BASE_BACKOFF_SECONDS * attempt
+
+
+def _api_get(url: str, params: dict = None):
+    """GET a GitHub API URL with retry/backoff on rate limits and 5xx.
+
+    Returns the last response even if it is still failing, so callers can
+    degrade through their normal error handling instead of crashing the run.
+    """
+    response = None
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        response = requests.get(url, timeout=10, headers=_api_headers(), params=params)
+        if response.status_code not in RETRYABLE_CODES or attempt == MAX_ATTEMPTS:
+            return response
+        delay = _retry_delay(response, attempt)
+        print(f"  ⚠ HTTP {response.status_code} — retry {attempt}/{MAX_ATTEMPTS - 1} "
+              f"in {delay:.0f}s")
+        time.sleep(delay)
+    return response
 
 
 def _utcnow() -> datetime:
@@ -59,7 +99,7 @@ def check_repo_health(repo_name: str) -> dict:
 
     url = f"https://api.github.com/repos/{GITHUB_USER}/{repo_name}"
     try:
-        response = requests.get(url, timeout=10, headers=_api_headers())
+        response = _api_get(url)
         if response.status_code == 200:
             data = response.json()
             return {
@@ -86,10 +126,8 @@ def check_workflow_health(repo_name: str) -> dict:
 
     url = f"https://api.github.com/repos/{GITHUB_USER}/{repo_name}/actions/runs"
     try:
-        response = requests.get(
-            url, timeout=10, headers=_api_headers(),
-            params={"per_page": CI_WINDOW_RUNS, "status": "completed"},
-        )
+        response = _api_get(
+            url, params={"per_page": CI_WINDOW_RUNS, "status": "completed"})
         if response.status_code != 200:
             return {"repo": repo_name, "status": "unavailable",
                     "code": response.status_code}
@@ -119,18 +157,29 @@ def get_repo_list() -> list:
     return list(G_CODE_REPOS)
 
 
+def _check_repo_full(repo_name: str) -> dict:
+    """Metadata + CI health for one repo (the unit of parallel work)."""
+    result = check_repo_health(repo_name)
+    if result["status"] == "healthy":
+        result["ci"] = check_workflow_health(repo_name)
+    return result
+
+
 def check_all_repos() -> list:
-    """Check all ecosystem repositories (metadata + CI/CD health)."""
-    results = []
-    for repo in get_repo_list():
-        result = check_repo_health(repo)
-        if result["status"] == "healthy":
-            result["ci"] = check_workflow_health(repo)
-        results.append(result)
+    """Check all ecosystem repositories (metadata + CI/CD health).
+
+    Repos run through a small thread pool — 20 sequential API calls used
+    to dominate the runtime. Output order still follows the repo list.
+    """
+    repos = get_repo_list()
+    with ThreadPoolExecutor(max_workers=MAX_PARALLEL_CHECKS) as pool:
+        results = list(pool.map(_check_repo_full, repos))
+
+    for result in results:
         status_icon = {"healthy": "✓", "not_found": "?", "error": "✗"}.get(result["status"], " ")
         ci = result.get("ci", {})
         ci_icon = {"failing": "⚡", "ok": "·"}.get(ci.get("status", ""), " ")
-        print(f"  [{status_icon}{ci_icon}] {repo}: {result['status']}"
+        print(f"  [{status_icon}{ci_icon}] {result['repo']}: {result['status']}"
               + (f" (CI: {ci.get('failed_runs', '?')}/{ci.get('checked_runs', '?')} failed)"
                  if ci else ""))
     return results
@@ -159,6 +208,12 @@ def save_report(results: list) -> Path:
 def main():
     """CLI entry point."""
     import argparse
+    import sys
+
+    # Windows consoles often default to a legacy codepage (e.g. cp950) that
+    # can't encode the status icons — degrade to '?' instead of crashing.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="replace")
 
     parser = argparse.ArgumentParser(description="Panopticon Outer Axis — Ecosystem Monitor")
     parser.add_argument("--all", action="store_true", help="Check all ecosystem repos")

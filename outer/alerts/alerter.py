@@ -202,6 +202,12 @@ class AlertSystem:
 
 def main():
     import argparse
+    import sys
+
+    # Degrade unencodable glyphs on legacy-codepage Windows consoles
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="replace")
+
     parser = argparse.ArgumentParser(description="Panopticon Alert System")
     parser.add_argument("--check", action="store_true", help="Check latest health report for anomalies")
     args = parser.parse_args()
