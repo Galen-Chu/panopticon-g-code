@@ -73,7 +73,9 @@ Key = `<type>:<repo>`，狀態變化（new / resolved）才觸發 issue 寫入�
 
 **結論：可行，且基礎建設已存在 — 但方向要反過來。**
 
-### 3.1 Obsidian_Library 現況調查（2026-11-18）
+### 3.1 Vault 現況調查（2026-11-18）
+
+**Obsidian_Library**（知識庫，INGEST→COMPILE→QUERY）：
 
 | Capability | Finding |
 |---|---|
@@ -84,7 +86,18 @@ Key = `<type>:<repo>`，狀態變化（new / resolved）才觸發 issue 寫入�
 | Conventions | 每日筆記 `YYYY-MM-DD.md`、frontmatter（`created`/`tags`/`aliases`）、wikilink、小寫連字號標籤、`templates/reflex.md`（反身思考模板，與內觀軸同源） |
 | Guards | pre-commit 擋亂碼／機密／檔名契約 |
 
-### 3.2 關鍵推論：方向反轉
+**Obsidian_Journal**（日記庫 — 個人日誌的真正源頭）：
+
+| Capability | Finding |
+|---|---|
+| Hosting | GitHub `Galen-Chu/Obsidian_Journal` — **private** ✓，**內含公司工作內容**（嚴禁公開） |
+| Structure | `daily/work|life|dream/` 三軌 + `weekly|monthly|yearly/` 同構；`scripts/journal.py` 建條目（冪等） |
+| Sync | 本機 Windows 排程 `ObsidianJournalSync` **每日 17:00** pull--rebase→commit→push；`sync.ps1` 同步原語 |
+| Cloud automation | `weekly-digest.yml`（週六 09:37 UTC+8 雲端彙整並推送）、`monthly-digest.yml` — **私有資料上雲端計算的先例已存在** |
+| Write discipline | 只 append 不改寫、Session Log、先查再寫（stable key + `<!-- digest:... -->` 標記區塊） |
+| AI boundary | work 軌為公司內容 → **任何第三方 API（含 Gemini）不得讀取 work 軌** |
+
+### 3.2 關鍵推論：方向反轉 + 落點修正
 
 原本的設想是「panopticon 的 CI 去 checkout 私有 vault」——**不可行也不該做**：
 
@@ -93,40 +106,56 @@ Key = `<type>:<repo>`，狀態變化（new / resolved）才觸發 issue 寫入�
 - `GITHUB_TOKEN` 不能跨 repo；放 PAT 進 public repo secrets 技術上可行，但計算
   結果仍會寫回 public repo → 一樣違反隱私鐵律。
 
-**正確方向（pull 模型，與 vault 既有管線同構）**：內觀軸的計算搬進
-**Obsidian_Library 的私有 Actions** 執行。私有端可以自由讀取公開端
-（panopticon 的 outer 資料本來就 public），反向不行——所以跨軸 correlation
-（需要同時讀 journal + 生態健康）**只屬於私有端**。
+第二個修正（2026-11-18 補充調查後）：內觀管線落點是 **Obsidian_Journal**，
+不是原本藍圖中的 Obsidian_Library。理由：
+
+1. **資料源頭在 Journal**——daily 條目（work/life/dream）都在 Journal repo，
+   本機每日 17:00 已自動同步上 GitHub；在 Library 跑等於多一次跨私有 repo
+   checkout（多一個 PAT 耦合），資料繞遠路。
+2. **私有資料上雲端計算的先例就在 Journal**——`weekly-digest.yml` 已在
+   Journal 的 Actions 裡讀 repo 內容、計算、推送回 repo。
+3. **Library 維持知識庫角色**——若未來要把 panopticon 洞察編譯進 wiki，
+   走 Library 既有的 artifact-import 模式收一條新串流即可（C-4，選配）。
+
+**隱私邊界再加一條**：Journal 的 `daily/work/` 是公司工作內容——
+**模式分析與 Gemini 只讀 `daily/life/` 與 `daily/dream/`，work 軌永遠排除**。
+（工作情緒對個人覺察也是雜訊；公司內容更不可進第三方 API。）
 
 ```
-┌─ public ─────────────────────┐      ┌─ private: Obsidian_Library ──────┐
-│ panopticon-g-code            │      │                                  │
-│  daily.yml: outer monitor    │      │  panopticon-inner.yml (新):      │
-│   → health_*.json committed  │─────▶│   1. checkout self (journal)     │
-│   → alerts / state           │ read │   2. checkout panopticon (code   │
-│                              │ only │      + public health archive)    │
-│ 本 repo 提供: outer 資料 +    │      │   3. inner.patterns → insights   │
-│ inner 模組程式碼（公有程式、  │      │   4. 跨軸 correlation             │
-│ 私有資料）                    │      │   5. 寫入 wiki/panopticon/ +     │
-└──────────────────────────────┘      │      guard + commit              │
-                                      └──────────────────────────────────┘
+┌─ public ─────────────────────┐      ┌─ private: Obsidian_Journal ──────┐
+│ panopticon-g-code            │      │  panopticon-inner.yml (新):      │
+│  daily.yml: outer monitor    │      │   1. checkout self (life/dream)  │
+│   → health_*.json committed  │─────▶│   2. checkout panopticon (程式碼 │
+│   → alerts / state           │ read │      + 公開健康資料)              │
+│                              │ only │   3. patterns → insights (Gemini) │
+│ 本 repo 提供: outer 資料 +    │      │   4. 跨軸 correlation             │
+│ inner 模組程式碼（公有程式、  │      │   5. 寫入 panopticon/ 資料夾      │
+│ 私有資料）                    │      │      （先查再寫、帶標記區塊）      │
+└──────────────────────────────┘      └──────────────────────────────────┘
+        ┌─ private: Obsidian_Library（角色不變）────────────────┐
+        │ 未來 (C-4 選配): 以既有 import-reports 模式收一條      │
+        │ panopticon 串流，編譯進 wiki/                          │
+        └────────────────────────────────────────────────────────┘
 ```
 
-### 3.3 Vault-side data design · vault 端資料設計
+排程設計：Journal 本機同步 17:00（UTC+8）→ 內觀管線 **10:23 UTC（18:23 台北）**
+——當日條目已同步、當日 outer 報告（09:23 台北）已 commit，兩軸資料都到齊。
 
-遵循 vault 既有慣例（wikilink、frontmatter、MD+JSON 孿生檔）：
+### 3.3 Journal-side data design · Journal 端資料設計
 
-- **Journal 儲存**：`notes/journal/YYYY-MM-DD.md`（人工書寫，Obsidian 原生）
-  - frontmatter：`created: YYYY-MM-DD`、`tags: [journal, panopticon-reflection]`
-  - 機器可讀側車 `notes/journal/YYYY-MM-DD.json`（對齊 `raw/reports/` 的
-    MD+JSON 契約），欄位相容 §2.4（`date`/`entry`/`prompt`）
-- **產出位置**：`wiki/panopticon/insight-YYYY-MM-DD.md`（每日洞察）、
-  `wiki/panopticon/correlation-YYYY-MM-DD.md`（跨軸相關）、
-  `wiki/panopticon/weekly-YYYY-Www.md`（週回顧，Phase C）
-  - frontmatter：`tags: [panopticon, insight]` 等；內文雙語、wikilink 連回
-    當日 journal note 與 panopticon repo
-- **Secrets**：`GEMINI_API_KEY` 設在 vault repo secrets（panopticon 端的
-  之後可撤除）
+遵循 Obsidian_Journal 既有慣例（只 append、先查再寫、標記區塊）：
+
+- **輸入（不新增檔案）**：直接讀 `daily/life/YYYY-MM-DD.md` 與
+  `daily/dream/YYYY-MM-DD.md` 的條目內文；管線內的轉接器把 MD 轉成
+  analyzer 的輸入格式（in-memory，不寫側車檔——日記是人的領域，
+  機器不回寫）。work 軌永遠排除（§3.2 隱私邊界）。
+- **產出位置**：Journal repo 的 `panopticon/` 專屬資料夾
+  - `panopticon/insight-YYYY-MM-DD.md`（每日洞察，雙語）
+  - `panopticon/correlation-YYYY-MM-DD.md`（跨軸相關）
+  - `panopticon/weekly-YYYY-Www.md`（週回顧，後續）
+  - 寫入紀律沿用 vault 慣例：同日同名已存在即跳過（冪等）
+- **Secrets**：`GEMINI_API_KEY` 設在 Obsidian_Journal repo secrets
+  （panopticon 端的於 C-3 撤除）
 
 ### 3.4 Rejected alternatives · 已否決的替代方案
 
@@ -143,11 +172,11 @@ Key = `<type>:<repo>`，狀態變化（new / resolved）才觸發 issue 寫入�
 
 | Phase | Scope | Notes |
 |---|---|---|
-| C-0（本次） | 本文件 + Phase A/B 落地 | alert 狀態化、月度 rollup、自我監看已上線 |
-| C-1 | vault 端 `panopticon-inner.yml`：checkout 兩個 repo → patterns/insights → 寫 `wiki/panopticon/` | 需先把既有本機 journal 遷入 `notes/journal/`（MD+JSON） |
-| C-2 | `inner.journal.cli` 增加 vault 匯出（`--vault <path>` 產生 MD+JSON 孿生檔） | 本機書寫習慣不變 |
-| C-3 | 跨軸 correlation 移入 vault 管線；panopticon daily.yml 移除 inner 步驟與 `GEMINI_API_KEY` | CI 誠實化為純 outer 軸 |
+| C-0（done） | 本文件 + Phase A/B 落地 | alert 狀態化、月度 rollup、自我監看已上線 |
+| C-1 | **Obsidian_Journal** 建 `panopticon-inner.yml`：checkout 兩 repo → 讀 daily/life+dream → patterns → insights → 寫 `panopticon/` | 需在 Journal repo 設 `GEMINI_API_KEY` secret；排程 10:23 UTC |
+| C-2 | 跨軸 correlation 移入 Journal 管線（讀 panopticon 公開健康資料）；panopticon daily.yml 移除 inner 步驟與 `GEMINI_API_KEY` | panopticon CI 誠實化為純 outer 軸 |
+| C-3（optional） | Obsidian_Library 以既有 import-reports 模式收一條 panopticon 洞察串流，編譯進 wiki/ | 走 Library 既有 PAT pattern |
 | C-4（optional） | dashboard 趨勢圖：讀 `monthly_*.ndjson` 畫歷史線 | 資產已在 repo 累積 |
 
-Migration note · 遷移注意：alert 狀態化上線後，舊制每日開的 8 張 issue
-（#14–#21）不會被新系統管理（無 label），需手動關閉一次。
+Migration note · 遷移記錄：舊制每日開的 8 張 alert issue（#14–#21）已於
+2026-11-18 全數關閉並註記；新追蹤 issue 由下一次 daily cycle 自動建立。
