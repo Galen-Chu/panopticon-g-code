@@ -144,16 +144,18 @@ Key = `<type>:<repo>`，狀態變化（new / resolved）才觸發 issue 寫入�
 
 ### 3.3 Journal-side data design · Journal 端資料設計
 
-遵循 Obsidian_Journal 既有慣例（只 append、先查再寫、標記區塊）：
+遵循 Obsidian_Journal 既有架構（`<periodicity>/<track>/`，先週期後軌道；
+只 append、先查再寫、標記區塊）：
 
 - **輸入（不新增檔案）**：直接讀 `daily/life/YYYY-MM-DD.md` 與
-  `daily/dream/YYYY-MM-DD.md` 的條目內文；管線內的轉接器把 MD 轉成
-  analyzer 的輸入格式（in-memory，不寫側車檔——日記是人的領域，
-  機器不回寫）。work 軌永遠排除（§3.2 隱私邊界）。
-- **產出位置**：Journal repo 的 `panopticon/` 專屬資料夾
-  - `panopticon/insight-YYYY-MM-DD.md`（每日洞察，雙語）
-  - `panopticon/correlation-YYYY-MM-DD.md`（跨軸相關）
-  - `panopticon/weekly-YYYY-Www.md`（週回顧，後續）
+  `daily/dream/dream_YYYY-MM-DD.md`（dream 帶檔名前綴）的條目內文；
+  管線內的轉接器把 MD 轉成 analyzer 的輸入格式（in-memory，不寫側車檔
+  ——日記是人的領域，機器不回寫）。work 軌永遠排除（§3.2 隱私邊界）。
+- **產出位置**：`daily/panopticon/`——daily 第四軌（觀察者軌），對齊
+  vault 架構與 dream_ 前綴慣例；frontmatter 用條目格式（type/date/tags）
+  - `daily/panopticon/panopticon_YYYY-MM-DD.md`（每日洞察，雙語）
+  - 週/月層級（`weekly/panopticon/`、C-2 跨軸相關等）後續依同構擴展
+  - 週/月彙整不受影響：vault 腳本明確列舉 work/life/dream，不 glob
   - 寫入紀律沿用 vault 慣例：同日同名已存在即跳過（冪等）
 - **Secrets**：`GEMINI_API_KEY` 設在 Obsidian_Journal repo secrets
   （panopticon 端的於 C-3 撤除）
