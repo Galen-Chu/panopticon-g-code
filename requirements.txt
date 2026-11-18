@@ -9,4 +9,4 @@ google-genai==2.17.0
 
 # Testing & linting
 pytest==9.1.1
-ruff==0.16.2
+ruff==0.17.5
