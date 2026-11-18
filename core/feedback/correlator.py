@@ -6,7 +6,7 @@ health to reveal deeper insights about the relationship between
 personal consciousness and project ecosystem states.
 """
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 DATA_DIR = Path(__file__).parent.parent.parent / "data"
@@ -44,7 +44,7 @@ class CorrelationEngine:
 
         result = {
             "status": "ok",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "analysis_period_days": days,
             "emotion_correlation": emotion_correlation,
             "behavior_correlation": behavior_correlation,
@@ -53,14 +53,14 @@ class CorrelationEngine:
         }
 
         # Save
-        filepath = self.insights_dir / f"correlation_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
+        filepath = self.insights_dir / f"correlation_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}.json"
         filepath.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
 
         return result
 
     def _correlate_emotions_with_health(self, journal: list, health: list) -> dict:
         """Find which emotions appear more on healthy vs issue days."""
-        from inner.patterns.analyzer import EMOTION_KEYWORDS
+        from inner.patterns.analyzer import EMOTION_KEYWORDS, count_keyword_hits
 
         # Build day -> healthy/issues map
         day_health = {}
@@ -78,11 +78,8 @@ class CorrelationEngine:
             if not context:
                 continue
 
-            text = entry.get("entry", "").lower()
             for emotion, keywords in EMOTION_KEYWORDS.items():
-                count = sum(text.count(kw) for kw in keywords["en"])
-                count += sum(entry.get("entry", "").count(kw) for kw in keywords["zh"])
-
+                count = count_keyword_hits(entry.get("entry", ""), keywords)
                 if context == "healthy":
                     emotion_on_healthy[emotion] = emotion_on_healthy.get(emotion, 0) + count
                 else:
@@ -95,7 +92,7 @@ class CorrelationEngine:
 
     def _correlate_behaviors_with_health(self, journal: list, health: list) -> dict:
         """Find which behavioral contexts correlate with ecosystem states."""
-        from inner.patterns.analyzer import BEHAVIOR_PATTERNS
+        from inner.patterns.analyzer import BEHAVIOR_PATTERNS, count_keyword_hits
 
         day_health = {}
         for report in health:
@@ -112,9 +109,8 @@ class CorrelationEngine:
             if not context:
                 continue
 
-            text = entry.get("entry", "").lower()
             for behavior, keywords in BEHAVIOR_PATTERNS.items():
-                count = sum(text.count(kw) for kw in keywords["en"] + keywords["zh"])
+                count = count_keyword_hits(entry.get("entry", ""), keywords)
                 if context == "healthy":
                     behavior_on_healthy[behavior] = behavior_on_healthy.get(behavior, 0) + count
                 else:
@@ -177,7 +173,6 @@ class CorrelationEngine:
 
         # Check timing
         coverage_healthy = timing.get("coverage_healthy", 0)
-        coverage_issues = timing.get("coverage_issues", 0)
 
         if coverage_healthy < 50 and coverage_healthy > 0:
             recs.append({
@@ -199,7 +194,7 @@ class CorrelationEngine:
         entries = []
         if not self.journal_dir.exists():
             return entries
-        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        cutoff = datetime.now(UTC) - timedelta(days=days)
         for filepath in sorted(self.journal_dir.glob("*.json"), reverse=True):
             try:
                 entry = json.loads(filepath.read_text(encoding="utf-8"))
@@ -208,7 +203,7 @@ class CorrelationEngine:
                     continue
                 entry_dt = datetime.fromisoformat(entry_date)
                 if entry_dt.tzinfo is None:
-                    entry_dt = entry_dt.replace(tzinfo=timezone.utc)
+                    entry_dt = entry_dt.replace(tzinfo=UTC)
                 if entry_dt >= cutoff:
                     entries.append(entry)
             except (json.JSONDecodeError, ValueError):

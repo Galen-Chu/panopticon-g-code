@@ -1,10 +1,10 @@
 """Tests for the Inner Axis pattern analyzer."""
 import json
-import pytest
-from pathlib import Path
 from datetime import date, timedelta
 
-from inner.patterns.analyzer import PatternAnalyzer, EMOTION_KEYWORDS, BEHAVIOR_PATTERNS
+import pytest
+
+from inner.patterns.analyzer import BEHAVIOR_PATTERNS, EMOTION_KEYWORDS, PatternAnalyzer
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def journal_dir(tmp_path):
 
 class TestEmotionKeywords:
     def test_all_emotions_have_bilingual_keywords(self):
-        for emotion, keywords in EMOTION_KEYWORDS.items():
+        for _emotion, keywords in EMOTION_KEYWORDS.items():
             assert "en" in keywords
             assert "zh" in keywords
             assert len(keywords["en"]) > 0
@@ -78,7 +78,7 @@ class TestPatternAnalyzer:
 
 class TestBehaviorPatterns:
     def test_all_behaviors_have_keywords(self):
-        for behavior, keywords in BEHAVIOR_PATTERNS.items():
+        for _behavior, keywords in BEHAVIOR_PATTERNS.items():
             assert "en" in keywords
             assert "zh" in keywords
 
@@ -111,3 +111,31 @@ class TestTrendDetection:
         journal = self._journal_with_lengths(tmp_path, [50, 55, 48, 52, 50, 51])
         result = PatternAnalyzer(journal).analyze(days=30)
         assert result["trends"]["trend"] == "stable"
+
+
+class TestKeywordBoundaries:
+    """English keywords must not match as inner substrings."""
+
+    @staticmethod
+    def _journal(tmp_path, text):
+        d = date.today().isoformat()
+        (tmp_path / f"{d}.json").write_text(
+            json.dumps({"date": d, "entry": text}), encoding="utf-8")
+        return tmp_path
+
+    def test_no_substring_false_positives(self, tmp_path):
+        journal = self._journal(tmp_path, "I enjoy the download and uptime dashboard.")
+        result = PatternAnalyzer(journal).analyze(days=30)
+        assert "joy" not in result["emotions"]      # 'enjoy' ≠ joy
+        assert "sadness" not in result["emotions"]  # 'down' removed entirely
+
+    def test_inflections_still_count(self, tmp_path):
+        journal = self._journal(tmp_path, "Feeling stressed and anxious today.")
+        result = PatternAnalyzer(journal).analyze(days=30)
+        assert result["emotions"].get("anxiety", 0) >= 2  # stressed + anxious
+
+    def test_chinese_substring_still_matches(self, tmp_path):
+        journal = self._journal(tmp_path, "今天感覺平靜，也有些焦慮。")
+        result = PatternAnalyzer(journal).analyze(days=30)
+        assert "calm" in result["emotions"]
+        assert "anxiety" in result["emotions"]

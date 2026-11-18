@@ -9,7 +9,6 @@ import re
 from collections import Counter
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 # Bilingual emotion keywords for pattern detection
 EMOTION_KEYWORDS = {
@@ -21,7 +20,9 @@ EMOTION_KEYWORDS = {
              "zh": ["平靜", "安寧", "放鬆", "安靜"]},
     "anger": {"en": ["angry", "frustrated", "irritated", "annoyed"],
               "zh": ["生氣", "沮喪", "煩躁", "惱怒"]},
-    "sadness": {"en": ["sad", "down", "depressed", "lonely", "empty"],
+    # "down" removed: substring/boundary matching can't separate it from
+    # "download"/"downtime" in technical journals
+    "sadness": {"en": ["sad", "unhappy", "depressed", "lonely", "empty"],
                 "zh": ["難過", "低落", "憂鬱", "孤獨", "空虛"]},
     "curiosity": {"en": ["curious", "wonder", "explore", "discover", "learn"],
                   "zh": ["好奇", "想知道", "探索", "發現", "學習"]},
@@ -44,6 +45,23 @@ BEHAVIOR_PATTERNS = {
     "body_awareness": {"en": ["body", "tired", "energy", "breath", "sleep"],
                         "zh": ["身體", "累", "能量", "呼吸", "睡眠"]},
 }
+
+
+def count_keyword_hits(text: str, keywords: dict) -> int:
+    """Count bilingual keyword occurrences in one text.
+
+    English keywords match with a left word boundary plus a free suffix
+    ("stress" also counts "stressed"/"stressful") but not as inner
+    substrings ("joy" no longer matches "enjoy"). Chinese keywords match
+    as substrings, as CJK has no word boundaries.
+    """
+    lowered = text.lower()
+    total = 0
+    for kw in keywords.get("en", []):
+        total += len(re.findall(rf"\b{re.escape(kw)}\w*", lowered))
+    for kw in keywords.get("zh", []):
+        total += text.count(kw)
+    return total
 
 
 class PatternAnalyzer:
@@ -79,13 +97,7 @@ class PatternAnalyzer:
         """Count emotion keyword occurrences across all entries."""
         emotion_counts = {}
         for emotion, keywords in EMOTION_KEYWORDS.items():
-            count = 0
-            for entry in entries:
-                text = entry.get("entry", "").lower()
-                for kw in keywords["en"]:
-                    count += text.count(kw)
-                for kw in keywords["zh"]:
-                    count += entry.get("entry", "").count(kw)
+            count = sum(count_keyword_hits(e.get("entry", ""), keywords) for e in entries)
             if count > 0:
                 emotion_counts[emotion] = count
         return dict(sorted(emotion_counts.items(), key=lambda x: x[1], reverse=True))
@@ -94,11 +106,7 @@ class PatternAnalyzer:
         """Detect behavioral patterns from entry text."""
         behavior_counts = {}
         for behavior, keywords in BEHAVIOR_PATTERNS.items():
-            count = 0
-            for entry in entries:
-                text = entry.get("entry", "").lower()
-                for kw in keywords["en"] + keywords["zh"]:
-                    count += text.count(kw)
+            count = sum(count_keyword_hits(e.get("entry", ""), keywords) for e in entries)
             if count > 0:
                 behavior_counts[behavior] = count
         return dict(sorted(behavior_counts.items(), key=lambda x: x[1], reverse=True))
