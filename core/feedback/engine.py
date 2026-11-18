@@ -125,13 +125,13 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Panopticon Feedback Engine")
-    parser.add_argument("--correlate", action="store_true", help="Run correlation analysis")
+    parser.add_argument("--correlate", action="store_true",
+                        help="Run correlation analysis (default: runs anyway)")
     args = parser.parse_args()
 
-    if args.correlate or not vars(args).get("any"):
-        engine = FeedbackEngine()
-        result = engine.correlate()
-        print(json.dumps(result, indent=2, ensure_ascii=False))
+    engine = FeedbackEngine()
+    result = engine.correlate()
+    print(json.dumps(result, indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":

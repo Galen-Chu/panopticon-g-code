@@ -113,26 +113,29 @@ pip install -r requirements.txt
 
 ```bash
 # Start today's reflection
-python -m inner.journal --today
+python -m inner.journal.cli --today
+
+# Write an entry
+python -m inner.journal.cli --write "your reflection"
 
 # Review patterns from the last 30 days
-python -m inner.patterns --days 30
+python -m inner.patterns.analyzer --days 30
 
 # Generate AI-powered insights
-python -m inner.insights --gemma
+python -m inner.insights.generator --analyze
 ```
 
 ### Outer Axis — Ecosystem Monitoring
 
 ```bash
-# Check all G-Code repos' health
-python -m outer.monitor --all
+# Check all G-Code repos' health (add --save to write a report)
+python -m outer.monitor.checker --all --save
 
 # Launch the visual dashboard
-python -m outer.dashboard
+python -m outer.dashboard.server
 
-# Set up automated alerts
-python -m outer.alerts --configure
+# Check the latest health report for anomalies
+python -m outer.alerts.alerter --check
 ```
 
 ---
