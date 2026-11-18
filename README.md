@@ -190,6 +190,15 @@ Inherited from the G-Code ecosystem:
 - [x] Correlation engine (inner patterns ↔ outer health)
 - [x] Adaptive adjustment recommendations
 
+### Phase 5 — Hardening & Route C · 2026-11-18
+- [x] Bug fixes: inverted reflection-trend detection, broken quick-start commands
+- [x] Daily cycle: single job + pip cache, parallel checks with rate-limit retry
+- [x] Stateful alert tracking (label `panopticon-alert`), monthly data rollup, self-watch on failure
+- [x] Tooling: ruff, pinned deps + Dependabot, CI matrix (3.11 / 3.13)
+- [x] Route C: inner axis + cross-axis correlation moved to the private
+      Obsidian_Journal pipeline — this repo is now pure outer axis
+      (see [docs/DATA-ARCHITECTURE.md](docs/DATA-ARCHITECTURE.md))
+
 ---
 
 ## 🔧 Operations · 維運
