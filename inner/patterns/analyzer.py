@@ -118,29 +118,34 @@ class PatternAnalyzer:
         return Counter(meaningful).most_common(top_n)
 
     def _detect_trends(self, entries: list) -> dict:
-        """Detect simple trends (increasing/decreasing reflection length)."""
+        """Detect simple trends (increasing/decreasing reflection length).
+
+        Entries arrive newest-first (see _load_entries), so they are put
+        back in chronological order before comparing halves: the first
+        half is the older period, the second half the more recent one.
+        """
         if len(entries) < 2:
             return {"trend": "insufficient_data"}
 
-        # Compare first half vs second half
-        mid = len(entries) // 2
-        first_half = [len(e.get("entry", "")) for e in entries[:mid]]
-        second_half = [len(e.get("entry", "")) for e in entries[mid:]]
+        chronological = list(reversed(entries))  # oldest → newest
+        mid = len(chronological) // 2
+        older = [len(e.get("entry", "")) for e in chronological[:mid]]
+        newer = [len(e.get("entry", "")) for e in chronological[mid:]]
 
-        avg_first = sum(first_half) / len(first_half) if first_half else 0
-        avg_second = sum(second_half) / len(second_half) if second_half else 0
+        avg_older = sum(older) / len(older) if older else 0
+        avg_newer = sum(newer) / len(newer) if newer else 0
 
-        if avg_second > avg_first * 1.2:
-            trend = "deepening"  # entries getting longer
-        elif avg_second < avg_first * 0.8:
-            trend = "simplifying"  # entries getting shorter
+        if avg_newer > avg_older * 1.2:
+            trend = "deepening"  # entries getting longer over time
+        elif avg_newer < avg_older * 0.8:
+            trend = "simplifying"  # entries getting shorter over time
         else:
             trend = "stable"
 
         return {
             "trend": trend,
-            "avg_length_first_half": round(avg_first),
-            "avg_length_second_half": round(avg_second),
+            "avg_length_first_half": round(avg_older),
+            "avg_length_second_half": round(avg_newer),
         }
 
     def _interpret_pattern(self, emotions: dict, behaviors: dict) -> str:

@@ -81,3 +81,33 @@ class TestBehaviorPatterns:
         for behavior, keywords in BEHAVIOR_PATTERNS.items():
             assert "en" in keywords
             assert "zh" in keywords
+
+
+class TestTrendDetection:
+    """Direction matters: entries load newest-first, so lengths must be
+    compared in chronological order or the labels come out inverted."""
+
+    @staticmethod
+    def _journal_with_lengths(directory, lengths_oldest_to_newest):
+        n = len(lengths_oldest_to_newest)
+        for i, length in enumerate(lengths_oldest_to_newest):
+            offset = n - 1 - i  # i=0 is the oldest entry
+            d = (date.today() - timedelta(days=offset)).isoformat()
+            (directory / f"{d}.json").write_text(
+                json.dumps({"date": d, "entry": "x" * length}), encoding="utf-8")
+        return directory
+
+    def test_deepening_when_entries_get_longer(self, tmp_path):
+        journal = self._journal_with_lengths(tmp_path, [10, 12, 40, 45, 90, 100])
+        result = PatternAnalyzer(journal).analyze(days=30)
+        assert result["trends"]["trend"] == "deepening"
+
+    def test_simplifying_when_entries_get_shorter(self, tmp_path):
+        journal = self._journal_with_lengths(tmp_path, [100, 90, 45, 40, 12, 10])
+        result = PatternAnalyzer(journal).analyze(days=30)
+        assert result["trends"]["trend"] == "simplifying"
+
+    def test_stable_when_lengths_similar(self, tmp_path):
+        journal = self._journal_with_lengths(tmp_path, [50, 55, 48, 52, 50, 51])
+        result = PatternAnalyzer(journal).analyze(days=30)
+        assert result["trends"]["trend"] == "stable"
