@@ -195,14 +195,22 @@ Inherited from the G-Code ecosystem:
 ## 🔧 Operations · 維運
 
 - **Daily cycle** runs at 09:23 Taiwan time (01:23 UTC, off the hour to dodge
-  GitHub schedule congestion); tests run on every push/PR (`.github/workflows/tests.yml`).
+  GitHub schedule congestion); tests + ruff lint run on every push/PR
+  (`.github/workflows/tests.yml`, Python 3.11 & 3.13).
 - **Data archive**: each day's health report is committed back to `data/monitor/`
   by the workflow — this keeps history accumulating in-repo and keeps the repo
   active (GitHub auto-disables scheduled workflows after 60 days of inactivity).
-- **Alerts** open a GitHub issue in this repo (deduplicated per day) when a repo
-  goes non-healthy, a pipeline fails repeatedly (≥2 of the last 15 runs), open
-  issues pile up, or a repo goes stale (30+ days without a push — an early hint
-  before GitHub's 60-day disable).
+  On the 1st of each month the previous month's dailies are compacted into a
+  single `monthly_YYYYMM.ndjson` (self-healing: late backfills merge in).
+- **Alerts** maintain one persistent tracking issue (label `panopticon-alert`):
+  it updates (body + delta comment) only when the anomaly set changes and
+  closes itself when everything is healthy — chronic problems no longer open a
+  new issue every day. Anomalies: non-healthy repo, pipeline failing repeatedly
+  (≥2 of the last 15 runs), piled-up open issues, or a stale repo (30+ days
+  without a push — an early hint before GitHub's 60-day disable). Alert state
+  persists in `data/state/` and is committed back like the health data.
+- **Self-watch**: if the daily cycle itself fails, a 🚨 issue is opened
+  (deduplicated per day) — the watchtower watches itself.
 - **AI insights** use `google-genai` with `gemini-3.6-flash`; without
   `GEMINI_API_KEY` they fall back to rule-based insights (logged, never silent).
 
