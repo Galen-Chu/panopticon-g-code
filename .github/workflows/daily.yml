@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   daily-cycle:
-    name: Monitor → Alerts → Inner Axis → Archive
+    name: Monitor → Alerts → Archive
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -43,27 +43,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PANOPTICON_ALERT_ISSUES: "1"
       run: python -m outer.alerts.alerter --check
-
-    # ── Inner axis · 內觀 ──────────────────────────────────────────
-    # Journal data is local-only (gitignored), so these are no-ops in CI
-    # until journal entries exist here; insights skip themselves on empty
-    # data. Kept continue-on-error so a bad day can't block the archive.
-    - name: Show today's reflection prompt
-      run: python -m inner.journal.cli --today
-
-    - name: Run pattern analysis
-      run: python -m inner.patterns.analyzer --days 30
-      continue-on-error: true
-
-    - name: Run AI insights
-      run: python -m inner.insights.generator --analyze
-      env:
-        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      continue-on-error: true
-
-    - name: Run cross-axis correlation
-      run: python -m core.feedback.correlator --days 30
-      continue-on-error: true
 
     # ── Archive · 回存 ─────────────────────────────────────────────
     # 每日健康報告回存 main —— 資料長期累積，且讓 repo 保持活躍

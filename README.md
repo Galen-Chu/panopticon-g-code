@@ -211,8 +211,12 @@ Inherited from the G-Code ecosystem:
   persists in `data/state/` and is committed back like the health data.
 - **Self-watch**: if the daily cycle itself fails, a 🚨 issue is opened
   (deduplicated per day) — the watchtower watches itself.
-- **AI insights** use `google-genai` with `gemini-3.6-flash`; without
-  `GEMINI_API_KEY` they fall back to rule-based insights (logged, never silent).
+- **AI insights & the inner axis** run in the private Obsidian_Journal
+  pipeline (`panopticon-inner.yml`, daily 18:23 Taipei); this public repo is
+  pure outer axis. Design: [docs/DATA-ARCHITECTURE.md](docs/DATA-ARCHITECTURE.md).
+  The inner CLI modules remain available for local use; insights use
+  `google-genai` with `gemini-3.6-flash` and fall back to rule-based without
+  a key (logged, never silent).
 
 ---
 

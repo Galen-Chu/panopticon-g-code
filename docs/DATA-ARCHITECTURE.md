@@ -1,7 +1,8 @@
 # Data Architecture & Inner-Axis Route C Design · 資料架構與內觀軸路線 C 設計
 
-> Status · 狀態：Phase A/B4 已實施；Route C 的 C-1（Journal 端內觀管線）已於
-> 2026-11-18 上線（Obsidian_Journal `panopticon-inner.yml`），C-2 起未實作。
+> Status · 狀態：Phase A/B4 已實施；Route C 的 C-1（Journal 端內觀管線）與
+> C-2（跨軸 correlation 移入 Journal、panopticon 純 outer 化）已於 2026-11-18
+> 上線；C-3/C-4 選配未實作。
 > Evaluated · 評估日期：2026-11-18
 
 ---
@@ -15,7 +16,7 @@
 | `data/state/alerts.json` | this repo (CI) · local | **public** (ecosystem metadata only) | rolling | alerter → tracking issue |
 | `data/alerts/alerts_*.json` | local only (gitignored) | private | ad hoc | alerter (local runs) |
 | `data/journal/*.json` | local only (gitignored) | **private — personal** | forever | `inner.journal.cli` → patterns / insights |
-| `data/insights/*.json` | local only (gitignored) | **private — derived from journal** | forever | insights / correlator |
+| `data/insights/*.json` | local only (gitignored) · Journal `daily/panopticon/` | **private — derived from journal** | forever | insights / correlator |
 
 **隱私鐵律 Privacy rule**：journal 原始資料與一切由它衍生的洞察（insights、
 correlations）**永遠不進 public repo**。Outer 軸資料（生態健康）本來就公開
@@ -177,7 +178,7 @@ Key = `<type>:<repo>`，狀態變化（new / resolved）才觸發 issue 寫入�
 |---|---|---|
 | C-0（done） | 本文件 + Phase A/B 落地 | alert 狀態化、月度 rollup、自我監看已上線 |
 | C-1（done） | **Obsidian_Journal** 建 `panopticon-inner.yml`：checkout 兩 repo → 讀 daily/life+dream → patterns → insights → 寫 `panopticon/` | 2026-11-18 上線（commit `09a94c9`）；`GEMINI_API_KEY` 已設於 Journal repo；排程 10:23 UTC |
-| C-2 | 跨軸 correlation 移入 Journal 管線（讀 panopticon 公開健康資料）；panopticon daily.yml 移除 inner 步驟與 `GEMINI_API_KEY` | panopticon CI 誠實化為純 outer 軸 |
+| C-2（done） | 跨軸 correlation 移入 Journal 管線（讀 panopticon-src checkout 內公開健康資料，結果嵌入每日洞察筆記）；panopticon daily.yml 移除 inner 步驟與 `GEMINI_API_KEY`（secret 已刪除） | 2026-11-18 上線；panopticon CI 誠實化為純 outer 軸 |
 | C-3（optional） | Obsidian_Library 以既有 import-reports 模式收一條 panopticon 洞察串流，編譯進 wiki/ | 走 Library 既有 PAT pattern |
 | C-4（optional） | dashboard 趨勢圖：讀 `monthly_*.ndjson` 畫歷史線 | 資產已在 repo 累積 |
 
