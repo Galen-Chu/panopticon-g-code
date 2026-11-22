@@ -5,16 +5,16 @@
       "repo": "spiritual-g-code",
       "level": "info",
       "first_seen": "2026-11-18T08:36:08.864103+00:00",
-      "last_seen": "2026-11-21T08:20:08.332679+00:00",
-      "message_en": "Stale repo: spiritual-g-code — no push in 77 days",
-      "message_zh": "儲存庫休眠：spiritual-g-code — 77 天未推送"
+      "last_seen": "2026-11-22T08:03:44.106643+00:00",
+      "message_en": "Stale repo: spiritual-g-code — no push in 78 days",
+      "message_zh": "儲存庫休眠：spiritual-g-code — 78 天未推送"
     },
     "stale:sync-g-code": {
       "type": "stale",
       "repo": "sync-g-code",
       "level": "info",
       "first_seen": "2026-11-18T08:36:08.864103+00:00",
-      "last_seen": "2026-11-21T08:20:08.332679+00:00",
+      "last_seen": "2026-11-22T08:03:44.106643+00:00",
       "message_en": "Stale repo: sync-g-code — no push in 46 days",
       "message_zh": "儲存庫休眠：sync-g-code — 46 天未推送"
     },
@@ -23,43 +23,43 @@
       "repo": "psychological-g-code",
       "level": "info",
       "first_seen": "2026-11-18T08:36:08.864103+00:00",
-      "last_seen": "2026-11-21T08:20:08.332679+00:00",
-      "message_en": "Stale repo: psychological-g-code — no push in 77 days",
-      "message_zh": "儲存庫休眠：psychological-g-code — 77 天未推送"
+      "last_seen": "2026-11-22T08:03:44.106643+00:00",
+      "message_en": "Stale repo: psychological-g-code — no push in 78 days",
+      "message_zh": "儲存庫休眠：psychological-g-code — 78 天未推送"
     },
     "stale:physiological-g-code": {
       "type": "stale",
       "repo": "physiological-g-code",
       "level": "info",
       "first_seen": "2026-11-18T08:36:08.864103+00:00",
-      "last_seen": "2026-11-21T08:20:08.332679+00:00",
-      "message_en": "Stale repo: physiological-g-code — no push in 77 days",
-      "message_zh": "儲存庫休眠：physiological-g-code — 77 天未推送"
+      "last_seen": "2026-11-22T08:03:44.106643+00:00",
+      "message_en": "Stale repo: physiological-g-code — no push in 78 days",
+      "message_zh": "儲存庫休眠：physiological-g-code — 78 天未推送"
     },
     "stale:skill-g-code": {
       "type": "stale",
       "repo": "skill-g-code",
       "level": "info",
       "first_seen": "2026-11-18T08:36:08.864103+00:00",
-      "last_seen": "2026-11-21T08:20:08.332679+00:00",
-      "message_en": "Stale repo: skill-g-code — no push in 77 days",
-      "message_zh": "儲存庫休眠：skill-g-code — 77 天未推送"
+      "last_seen": "2026-11-22T08:03:44.106643+00:00",
+      "message_en": "Stale repo: skill-g-code — no push in 78 days",
+      "message_zh": "儲存庫休眠：skill-g-code — 78 天未推送"
     },
     "stale:spec-g-code": {
       "type": "stale",
       "repo": "spec-g-code",
       "level": "info",
       "first_seen": "2026-11-18T08:36:08.864103+00:00",
-      "last_seen": "2026-11-21T08:20:08.332679+00:00",
-      "message_en": "Stale repo: spec-g-code — no push in 77 days",
-      "message_zh": "儲存庫休眠：spec-g-code — 77 天未推送"
+      "last_seen": "2026-11-22T08:03:44.106643+00:00",
+      "message_en": "Stale repo: spec-g-code — no push in 78 days",
+      "message_zh": "儲存庫休眠：spec-g-code — 78 天未推送"
     },
     "high_issues:panopticon-g-code": {
       "type": "high_issues",
       "repo": "panopticon-g-code",
       "level": "warning",
       "first_seen": "2026-11-18T08:36:08.864103+00:00",
-      "last_seen": "2026-11-21T08:20:08.332679+00:00",
+      "last_seen": "2026-11-22T08:03:44.106643+00:00",
       "message_en": "High open issues: 14 in panopticon-g-code",
       "message_zh": "未解決議題過多：panopticon-g-code 有 14 個"
     },
@@ -68,11 +68,11 @@
       "repo": "pms-test-automation-script",
       "level": "warning",
       "first_seen": "2026-11-18T08:36:08.864103+00:00",
-      "last_seen": "2026-11-21T08:20:08.332679+00:00",
+      "last_seen": "2026-11-22T08:03:44.106643+00:00",
       "message_en": "Failing CI: 9/15 recent runs failed in pms-test-automation-script",
       "message_zh": "CI 失敗：pms-test-automation-script 近期 15 次執行中 9 次失敗"
     }
   },
   "recently_resolved": {},
-  "updated": "2026-11-21T08:20:08.332761+00:00"
+  "updated": "2026-11-22T08:03:44.106682+00:00"
 }
