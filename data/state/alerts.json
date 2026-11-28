@@ -5,7 +5,7 @@
       "repo": "panopticon-g-code",
       "level": "warning",
       "first_seen": "2026-11-18T08:36:08.864103+00:00",
-      "last_seen": "2026-11-27T09:43:05.107464+00:00",
+      "last_seen": "2026-11-28T08:56:51.604907+00:00",
       "message_en": "High open issues: 12 in panopticon-g-code",
       "message_zh": "未解決議題過多：panopticon-g-code 有 12 個"
     },
@@ -14,7 +14,7 @@
       "repo": "pms-test-automation-script",
       "level": "warning",
       "first_seen": "2026-11-18T08:36:08.864103+00:00",
-      "last_seen": "2026-11-27T09:43:05.107464+00:00",
+      "last_seen": "2026-11-28T08:56:51.604907+00:00",
       "message_en": "Failing CI: 9/15 recent runs failed in pms-test-automation-script",
       "message_zh": "CI 失敗：pms-test-automation-script 近期 15 次執行中 9 次失敗"
     },
@@ -23,7 +23,7 @@
       "repo": "spec-g-code",
       "level": "warning",
       "first_seen": "2026-11-25T09:53:55.607269+00:00",
-      "last_seen": "2026-11-27T09:43:05.107464+00:00",
+      "last_seen": "2026-11-28T08:56:51.604907+00:00",
       "message_en": "Failing CI: 2/8 recent runs failed in spec-g-code",
       "message_zh": "CI 失敗：spec-g-code 近期 8 次執行中 2 次失敗"
     },
@@ -32,7 +32,7 @@
       "repo": "TEXT-Message",
       "level": "warning",
       "first_seen": "2026-11-25T09:53:55.607269+00:00",
-      "last_seen": "2026-11-27T09:43:05.107464+00:00",
+      "last_seen": "2026-11-28T08:56:51.604907+00:00",
       "message_en": "Failing CI: 7/15 recent runs failed in TEXT-Message",
       "message_zh": "CI 失敗：TEXT-Message 近期 15 次執行中 7 次失敗"
     },
@@ -41,7 +41,7 @@
       "repo": "spiritual-g-code",
       "level": "warning",
       "first_seen": "2026-11-27T09:43:05.107464+00:00",
-      "last_seen": "2026-11-27T09:43:05.107464+00:00",
+      "last_seen": "2026-11-28T08:56:51.604907+00:00",
       "message_en": "Failing CI: 4/15 recent runs failed in spiritual-g-code",
       "message_zh": "CI 失敗：spiritual-g-code 近期 15 次執行中 4 次失敗"
     }
@@ -84,5 +84,5 @@
       "duration_days": 7
     }
   },
-  "updated": "2026-11-27T09:43:05.107502+00:00"
+  "updated": "2026-11-28T08:56:51.604932+00:00"
 }
